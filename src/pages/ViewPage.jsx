@@ -9,10 +9,31 @@ export default function View() {
   const [sortField, setSortField] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
 
+  // Filter states
+  const [priceRange, setPriceRange] = useState([0, 20000]);
+  const [departureRange, setDepartureRange] = useState(["00:00", "23:59"]);
+
+  // Convert HH:mm → minutes
+  const timeToMinutes = (t) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+
   // Filter flights
-  const filteredFlights = flightData.filter(
-    (flight) => flight.from.includes(from) && flight.to.includes(to)
-  );
+  const filteredFlights = flightData.filter((flight) => {
+    const inRoute =
+      (!from || flight.from.includes(from)) && (!to || flight.to.includes(to));
+
+    const inPrice =
+      flight.price >= priceRange[0] && flight.price <= priceRange[1];
+
+    const depMinutes = timeToMinutes(flight.departure);
+    const start = timeToMinutes(departureRange[0]);
+    const end = timeToMinutes(departureRange[1]);
+    const inDeparture = depMinutes >= start && depMinutes <= end;
+
+    return inRoute && inPrice && inDeparture;
+  });
 
   // Sorting
   const sortedFlights = useMemo(() => {
@@ -49,50 +70,103 @@ export default function View() {
         Available Flights
       </h1>
 
-      {/* Sorting controls */}
-      <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
-        {/* Sort By */}
-        <label className="inline-flex items-center gap-2 w-full md:w-1/4 whitespace-nowrap">
-          <span className="label-text">Sort By:</span>
-          <select
-            value={sortField}
-            onChange={(e) => setSortField(e.target.value)}
-            className="select select-bordered flex-1"
-          >
-            <option value="">Select field</option>
-            <option value="price">Price</option>
-            <option value="departure">Departure Time</option>
-            <option value="duration">Duration</option>
-          </select>
-        </label>
+      {/* Sorting & Filtering controls */}
+      <div className="flex flex-col gap-4 mb-6">
+        {/* Sorting */}
+        <div className="flex flex-col md:flex-row gap-4 justify-center">
+          {/* Sort By */}
+          <label className="inline-flex items-center gap-2 w-full md:w-1/4 whitespace-nowrap">
+            <span className="label-text">Sort By:</span>
+            <select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value)}
+              className="select select-bordered flex-1"
+            >
+              <option value="">Select field</option>
+              <option value="price">Price</option>
+              <option value="departure">Departure Time</option>
+              <option value="duration">Duration</option>
+            </select>
+          </label>
 
-        {/* Order */}
-        <label className="inline-flex items-center gap-2 w-full md:w-1/4 whitespace-nowrap">
-          <span className="label-text">Order:</span>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-            className="select select-bordered flex-1"
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
-        </label>
+          {/* Order */}
+          <label className="inline-flex items-center gap-2 w-full md:w-1/4 whitespace-nowrap">
+            <span className="label-text">Order:</span>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="select select-bordered flex-1"
+            >
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </label>
 
-        {/* Reset Button */}
-        <div className="flex items-center">
-          <button
-            onClick={() => {
-              setSortField("");
-              setSortOrder("asc");
-            }}
-            className="btn btn-warning"
-          >
-            Reset
-          </button>
+          {/* Reset */}
+          <div className="flex items-center">
+            <button
+              onClick={() => {
+                setSortField("");
+                setSortOrder("asc");
+                setPriceRange([0, 20000]);
+                setDepartureRange(["00:00", "23:59"]);
+              }}
+              className="btn btn-warning"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-4 justify-center">
+          {/* Price Filter */}
+          <label className="inline-flex items-center gap-2 w-full md:w-1/3">
+            <span className="label-text">Price:</span>
+            <input
+              type="number"
+              value={priceRange[0]}
+              onChange={(e) =>
+                setPriceRange([Number(e.target.value), priceRange[1]])
+              }
+              className="input input-bordered w-1/2"
+              placeholder="Min"
+            />
+            <input
+              type="number"
+              value={priceRange[1]}
+              onChange={(e) =>
+                setPriceRange([priceRange[0], Number(e.target.value)])
+              }
+              className="input input-bordered w-1/2"
+              placeholder="Max"
+            />
+          </label>
+
+          {/* Departure Time Filter */}
+          <label className="inline-flex items-center gap-2 w-full md:w-1/3">
+            <span className="label-text">Departure:</span>
+            <input
+              type="time"
+              value={departureRange[0]}
+              onChange={(e) =>
+                setDepartureRange([e.target.value, departureRange[1]])
+              }
+              className="input input-bordered"
+            />
+            <input
+              type="time"
+              value={departureRange[1]}
+              onChange={(e) =>
+                setDepartureRange([departureRange[0], e.target.value])
+              }
+              className="input input-bordered"
+            />
+          </label>
         </div>
       </div>
 
+      {/* Flight Cards */}
       {sortedFlights.length > 0 ? (
         <div className="flex flex-col gap-4">
           {sortedFlights.map((flight) => (
@@ -100,7 +174,7 @@ export default function View() {
               key={flight.id}
               className="bg-white rounded-xl shadow-md p-4 flex flex-col md:flex-row items-center justify-between"
             >
-              {/* Left side: Airline logo + name */}
+              {/* Left side*/}
               <div className="flex items-center gap-4 w-full md:w-1/4 mb-4 md:mb-0">
                 <img
                   src={flight.airlineLogo}
@@ -117,19 +191,19 @@ export default function View() {
                   {flight.departure}
                 </p>
                 <p>
-                  <span className="font-semibold">Arrival:</span>{" "}
-                  {flight.arrival}
-                </p>
-                <p>
                   <span className="font-semibold">Duration:</span>{" "}
                   {flight.duration}
+                </p>
+                <p>
+                  <span className="font-semibold">Arrival:</span>{" "}
+                  {flight.arrival}
                 </p>
                 <p className="text-green-600 font-bold text-lg">
                   ₹{flight.price}
                 </p>
               </div>
 
-              {/* Right side: Button */}
+              {/* Right side - Button */}
               <div className="w-full md:w-1/4 flex justify-center md:justify-end mt-4 md:mt-0">
                 <button className="bg-green-600 text-white py-2 px-5 rounded-lg hover:bg-green-700 transition">
                   Book Now

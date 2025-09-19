@@ -20,7 +20,7 @@ export default function Home() {
         className="hero min-h-screen"
         style={{
           backgroundImage:
-            "url(https://img.freepik.com/free-photo/aerial-view-north-cardigan-bay-wales_181624-12728.jpg?t=st=1758050027~exp=1758053627~hmac=fb0aecc789744d0bc9f174069c9a5842806810aaa74525b3b70233ef79531972&w=2000)",
+            "url(https://img.freepik.com/free-photo/aerial-view-north-cardigan-bay-wales_181624-12728.jpg?t=st=1758131835~exp=1758135435~hmac=644c3b1eda3008324845d10a335b20fafc9455277e534f87c1cd0a7ec29775c6&w=2000)",
         }}
       >
         <div className="hero-overlay"></div>
